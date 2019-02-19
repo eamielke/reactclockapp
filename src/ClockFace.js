@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import { DateTime } from 'luxon';
+import {DateTime} from 'luxon';
 
 class ClockFace extends Component {
 
@@ -104,9 +104,9 @@ class ClockFace extends Component {
         const ctx = this.refs.canvasForeGround.getContext('2d');
         ctx.webkitImageSmoothingEnabled = true;
         this.resetClockFace(ctx);
-        this.drawHand(ctx, this.getHourAngle(), 'black', 4, .80 * this.getFaceDiameter() / 2);
-        this.drawHand(ctx, this.getMinuteAngle(), 'blue', 2, .95 * this.getFaceDiameter() / 2);
-        this.drawHand(ctx, this.getSecondsAngle(), 'red', 1, .98 * this.getFaceDiameter() / 2);
+        this.drawHand(ctx, this.getHourAngle(), 'black', 0.02 * (this.getFaceDiameter()), .80 * this.getFaceDiameter() / 2);
+        this.drawHand(ctx, this.getMinuteAngle(), 'blue', 0.01 * (this.getFaceDiameter()), .90 * this.getFaceDiameter() / 2);
+        this.drawHand(ctx, this.getSecondsAngle(), 'red', 1, .90 * this.getFaceDiameter() / 2);
 
     }
 
@@ -130,16 +130,26 @@ class ClockFace extends Component {
         this.resetClockFace(ctx);
         ctx.arc(0, 0, this.getFaceDiameter() / 2, 0, 2 * Math.PI);
         ctx.stroke();
-        this.drawHourMarks(ctx);
-        this.drawMinuteMarks(ctx);
+        if (this.props.drawHourMarks) {
+            this.drawHourMarks(ctx);
+        }
+        if (this.props.drawMinuteMarks) {
+            this.drawMinuteMarks(ctx);
+        }
+
     }
 
     drawHourMarks(ctx) {
 
+        let h = 0.015 * this.getFaceDiameter() * this.props.yScaleFactor;
+        let w = 0.05 * this.getFaceDiameter() * this.props.xScaleFactor;
+        let x = .90 * this.getFaceDiameter() / 2 - 0.05 * this.getFaceDiameter() * this.props.xScaleFactor;
+        let y = -0.0075 * this.getFaceDiameter();
+
         for (let i = 0; i < 13; i++) {
             ctx.save();
             ctx.rotate((this.calculateHourAngle(i, 0, 0)) * Math.PI / 180);
-            ctx.fillRect(.90 * this.getFaceDiameter() / 2 - 10, -1.5, 10, 3);
+            ctx.fillRect(x, y, w , h);
             ctx.restore();
 
         }
@@ -148,10 +158,16 @@ class ClockFace extends Component {
 
     drawMinuteMarks(ctx) {
 
+        let w = 0.025 * this.getFaceDiameter() * this.props.xScaleFactor;
+        let h = 1*this.props.yScaleFactor;
+        let x = 0.90 * this.getFaceDiameter() / 2 - 0.025 * this.getFaceDiameter() * this.props.xScaleFactor;
+        let y = -0.00025 * this.getFaceDiameter();
+
+
         for (let i = 0; i < 60; i++) {
             ctx.save();
             ctx.rotate((this.calculateMinuteAngle(i, 0, 0)) * Math.PI / 180);
-            ctx.fillRect(0.90 * this.getFaceDiameter() / 2 - 5, -0.5, 5, 1);
+            ctx.fillRect(x, y, w, h);
             ctx.restore();
 
         }
@@ -253,6 +269,14 @@ class ClockFace extends Component {
             </div>
         )
     }
+}
+
+ClockFace.defaultProps = {
+    faceDiameter: 200,
+    drawMinuteMarks: true,
+    drawHourMarks: true,
+    xScaleFactor: 1,
+    yScaleFactor: 1,
 }
 
 export default ClockFace;

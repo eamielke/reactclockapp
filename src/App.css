@@ -2,9 +2,16 @@
     text-align: center;
 }
 
-.clockFace {
-    float: left;
-    position: relative;
+.mainDiv:after {
+    content: "";
+    display: table;
+    clear: both;
+    text-align: center;
+}
+
+.clockDiv {
+    display: inline-block;
+    vertical-align: middle;
 }
 
 .centeredTable {
