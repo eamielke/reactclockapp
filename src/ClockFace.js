@@ -104,10 +104,10 @@ class ClockFace extends Component {
         const ctx = this.refs.canvasForeGround.getContext('2d');
         ctx.webkitImageSmoothingEnabled = true;
         this.resetClockFace(ctx);
-        this.drawHand(ctx, this.getHourAngle(), 'black', 0.02 * (this.getFaceDiameter()), .80 * this.getFaceDiameter() / 2);
-        this.drawHand(ctx, this.getMinuteAngle(), 'blue', 0.01 * (this.getFaceDiameter()), .90 * this.getFaceDiameter() / 2);
-        this.drawHand(ctx, this.getSecondsAngle(), 'red', 1, .90 * this.getFaceDiameter() / 2);
-
+        this.drawHand(ctx, this.getHourAngle(), 'black', 0.05 * (this.getFaceDiameter()),  0.02 * (this.getFaceDiameter()), .80 * this.getFaceDiameter() / 2);
+        this.drawHand(ctx, this.getMinuteAngle(), 'blue', 0.05 * (this.getFaceDiameter()), 0.01 * (this.getFaceDiameter()), .90 * this.getFaceDiameter() / 2);
+        this.drawHand(ctx, this.getSecondsAngle(), 'red', 1, 0.5, .90 * this.getFaceDiameter() / 2, true);
+        this.drawCap(ctx);
     }
 
     formatTime(time) {
@@ -137,6 +137,22 @@ class ClockFace extends Component {
             this.drawMinuteMarks(ctx);
         }
 
+        //this.drawDate(ctx);
+
+    }
+
+    drawDate(ctx) {
+        ctx.font = '10px sans-serif';
+        ctx.fillText(this.getCurrentDate().day, 0.55 * this.getFaceDiameter()/2, 1.5);
+        ctx.stroke();
+    }
+
+    drawCap(ctx) {
+        ctx.save();
+        ctx.fillStyle = 'red';
+        ctx.arc(0, 0, this.getFaceDiameter() / 30, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
     }
 
     drawHourMarks(ctx) {
@@ -149,7 +165,7 @@ class ClockFace extends Component {
         for (let i = 0; i < 13; i++) {
             ctx.save();
             ctx.rotate((this.calculateHourAngle(i, 0, 0)) * Math.PI / 180);
-            ctx.fillRect(x, y, w , h);
+            ctx.fillRect(x, y, w, h);
             ctx.restore();
 
         }
@@ -159,7 +175,7 @@ class ClockFace extends Component {
     drawMinuteMarks(ctx) {
 
         let w = 0.025 * this.getFaceDiameter() * this.props.xScaleFactor;
-        let h = 1*this.props.yScaleFactor;
+        let h = 1 * this.props.yScaleFactor;
         let x = 0.90 * this.getFaceDiameter() / 2 - 0.025 * this.getFaceDiameter() * this.props.xScaleFactor;
         let y = -0.00025 * this.getFaceDiameter();
 
@@ -174,21 +190,38 @@ class ClockFace extends Component {
 
     }
 
-    drawHand(ctx, angle, color, handWidth, handLength) {
+    drawHand(ctx, angle, color, baseHandWidth, handWidth, handLength, tail) {
         ctx.save();
         ctx.rotate((angle - 90) * Math.PI / 180);
         ctx.strokeStyle = color;
         ctx.fillStyle = color;
-        ctx.fillRect(0, -0.5 * handWidth, handLength, handWidth);
+        //ctx.fillRect(0, -0.5 * handWidth, handLength, handWidth);
+        this.drawTrapezoid(ctx, 0, 0, baseHandWidth, handWidth, handLength, tail);
         ctx.restore();
     }
 
+
+    drawTrapezoid(ctx, x, y, baseWidth, width, height, tail) {
+
+        let tailLen = 0;
+        if (tail) {
+            tailLen = 0.30 * height;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(x - tailLen, (y + baseWidth) * -0.5);
+        ctx.lineTo(x + height, (y + width) * -0.5);
+        ctx.lineTo(x + height, (y + width) * 0.5);
+        ctx.lineTo(x -tailLen, (y + baseWidth) * 0.5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+    }
 
     componentDidMount() {
         this.interval = setInterval(() => this.updateTime(), 50);
         const ctx = this.refs.canvasBackground.getContext('2d');
         this.drawDial(ctx);
-
     }
 
     componentWillUnmount() {
@@ -204,6 +237,7 @@ class ClockFace extends Component {
             ms: this.getCurrentMs(),
             tickingSecondHand: !this.state.tickingSecondHand
         });
+
     }
 
 
@@ -239,6 +273,22 @@ class ClockFace extends Component {
     }
 
 
+    getTimeZoneForDisplay() {
+        let tz = '';
+
+        if (this.props.timeZone) {
+            tz = this.props.timeZone;
+        } else {
+            tz = this.getCurrentDate().zone.name;
+        }
+        return tz;
+    }
+
+    getTimeZoneDiv() {
+        let tz = this.getTimeZoneForDisplay();
+        return (<div><span>{tz}</span></div>)
+    }
+
     render() {
         let statsTable;
 
@@ -246,26 +296,25 @@ class ClockFace extends Component {
             statsTable = this.getStatsTable();
         }
 
-        let tz;
+        let tz = this.getTimeZone();
 
-        if (this.props.timeZone) {
-            tz = this.props.timeZone;
-        } else {
-            tz = this.getCurrentDate().zone.name;
-        }
+        let timeZoneDiv = this.getTimeZoneDiv();
+
 
         return (
             <div>
 
                 {statsTable}
 
-                <div onClick={this.toggleTicking} className="analogClock" title={tz}
+                <div id={this.props.id + "inner"} onClick={this.toggleTicking} className="analogClock" title={tz}
                      style={{width: this.props.faceDiameter + 'px', height: this.props.faceDiameter + 'px'}}>
                     <canvas className="canvasForeGround" ref="canvasForeGround" width={this.props.faceDiameter}
                             height={this.props.faceDiameter}/>
                     <canvas className="canvasBackGround" ref="canvasBackground" width={this.props.faceDiameter}
                             height={this.props.faceDiameter}/>
                 </div>
+
+                {timeZoneDiv}
             </div>
         )
     }
@@ -276,7 +325,7 @@ ClockFace.defaultProps = {
     drawMinuteMarks: true,
     drawHourMarks: true,
     xScaleFactor: 1,
-    yScaleFactor: 1,
+    yScaleFactor: 1
 }
 
 export default ClockFace;
